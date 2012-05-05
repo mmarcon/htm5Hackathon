@@ -78,6 +78,7 @@ var Audio = (function() {
 	    source.playbackRate.value = 1.0;
 
 	    panner.setPosition(0, 0, 0);
+
 	    source.looping = true;
 
 	    return {
@@ -91,7 +92,7 @@ var Audio = (function() {
 	    	x = Math.cos(localOrientation) * 4,
 	        y = Math.sin(localOrientation) * 4;
 		self.context.listener.setOrientation(x, y, 0, 0, 0, 1);
-		self.context.listener.setPosition(listener.lng, listener.lat, 0);
+		self.context.listener.setPosition(listener.lng*100, listener.lat*100, 0);
 	};
 
 	self.getCurrentTime = function() {
