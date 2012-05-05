@@ -23,7 +23,7 @@ var Audio = (function() {
     };
 
     self.setAudioSource = function(audio, url) {
-        var buffer = bufferList[url];
+        var buffer = self.bufferList[url];
 		
         // See if we have cached buffer
         if (buffer) {
@@ -46,18 +46,18 @@ var Audio = (function() {
     };
 	
 	self.createSource = function(options){
-	    var source, dryGainNode, wetGainNode, panner, lowFilter, convolver;
+	    var source, dryGainNode, wetGainNode, panner, lowFilter, convolver, options = options || {};
 
-	    source = audioContext.createBufferSource();
-	    dryGainNode = audioContext.createGainNode();
-	    wetGainNode = audioContext.createGainNode();
-	    panner = audioContext.createPanner();
+	    source = self.context.createBufferSource();
+	    dryGainNode = self.context.createGainNode();
+	    wetGainNode = self.context.createGainNode();
+	    panner = self.context.createPanner();
 
-	    lowFilter = audioContext.createBiquadFilter();
+	    lowFilter = self.context.createBiquadFilter();
 	    lowFilter.frequency.value = options.lowFilterFrequencyValue || defaults.lowFilterFrequencyValue;
 	    lowFilter.Q.value = options.lowFilterQValue || defaults.lowFilterQValue;
 
-	    convolver = audioContext.createConvolver();
+	    convolver = self.context.createConvolver();
 
 	    // Connect audio processing graph
 	    source.connect(lowFilter);
@@ -65,15 +65,15 @@ var Audio = (function() {
 
 	    // Connect dry mix
 	    panner.connect(dryGainNode);
-	    dryGainNode.connect(audioContext.destination);
+	    dryGainNode.connect(self.context.destination);
 
 	    // Connect wet mix
 	    panner.connect(convolver);
 	    convolver.connect(wetGainNode);
-	    wetGainNode.connect(audioContext.destination);
+	    wetGainNode.connect(self.context.destination);
 	    wetGainNode.gain.value = options.kInitialReverbLevel || defaults.kInitialReverbLevel;
 
-	    setReverbImpulseResponse('s3_r4_bd.wav', convolver);
+	    self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
 
 	    source.playbackRate.value = 1.0;
 
@@ -86,12 +86,17 @@ var Audio = (function() {
 	    };
 	};
 	
-	self.setListenerOrientation = function(listener) {
-	    var x = Math.cos(listener.orientation) * 4,
+	self.setListenerPosition = function(listener) {
+	    var localOrientation = (2*Math.PI - listener.orientation) - Math.PI / 2,
+	    	x = Math.cos(listener.orientation) * 4,
 	        y = Math.sin(listener.orientation) * 4;
 	    //self.context.listener.setOrientation(x, 0, y, 0, 1, 0);
 		self.context.listener.setOrientation(x, y, 0, 0, 0, 1);
 		self.context.listener.setPosition(listener.lat, listener.lng, 0);
+	};
+
+	self.getCurrentTime = function() {
+		return self.context.currentTime;
 	};
 
 	var init = function(){
@@ -104,14 +109,6 @@ var Audio = (function() {
 	    }
 
 	    self.bufferList = {};
-		/*
-	    for (var i = 0; i < Math.min(10, fs.sounds.length); i++) {
-	        fsAudio[i] = createSource();
-	        setAudioSource(fsAudio[i], fs.sounds[i]['preview-hq-mp3']);
-	        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lat, fs.sounds[i]['geotag'].lon, 0)
-	        fsAudio[i].source.noteOn(audioContext.currentTime + 0.020);
-	    }
-		*/
 	};
 	
 	init();
@@ -120,9 +117,9 @@ var Audio = (function() {
 		setReverbImpulseResponse: self.setReverbImpulseResponse,
 		setAudioSource: self.setAudioSource,
 		createSource: self.createSource,
-		setListenerOrientation: self.setListenerOrientation
+		getCurrentTime: self.getCurrentTime,
+		setListenerPosition: self.setListenerPosition
 	}
 
-}
 })();
 
