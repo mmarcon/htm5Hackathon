@@ -73,7 +73,7 @@ var Audio = (function() {
 	    wetGainNode.connect(self.context.destination);
 	    wetGainNode.gain.value = options.kInitialReverbLevel || defaults.kInitialReverbLevel;
 
-	    // self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
+	    self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
 
 	    source.playbackRate.value = 1.0;
 
@@ -87,12 +87,11 @@ var Audio = (function() {
 	};
 	
 	self.setListenerPosition = function(listener) {
-	    var localOrientation = (2*Math.PI - listener.orientation),
+	    var localOrientation = ((2*Math.PI - listener.orientation) + Math.PI/2)%(2*Math.PI),
 	    	x = Math.cos(localOrientation) * 4,
 	        y = Math.sin(localOrientation) * 4;
-	    //self.context.listener.setOrientation(x, 0, y, 0, 1, 0);
 		self.context.listener.setOrientation(x, y, 0, 0, 0, 1);
-		self.context.listener.setPosition(listener.lat, listener.lng, 0);
+		self.context.listener.setPosition(listener.lng, listener.lat, 0);
 	};
 
 	self.getCurrentTime = function() {
