@@ -178,7 +178,7 @@
 	    		for (var i = 0; i < Math.min(5, fs.sounds.length); i++) {
 			        fsAudio[i] = Audio.createSource();
 			        Audio.setAudioSource(fsAudio[i], fs.sounds[i]['preview-hq-mp3']);
-			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lon, fs.sounds[i]['geotag'].lat,0);
+			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lon*100, fs.sounds[i]['geotag'].lat*100,0);
 			        var marker = new nokia.maps.map.StandardMarker({latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon});
 			        marker.text = fs.sounds[i]['tags'].join(', ');
 			        marker.coord = {latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon};
