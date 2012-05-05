@@ -1,5 +1,5 @@
-(function(window){
-	window.APP = window.APP || {};
+(function(){
+	var APP = window.APP = window.APP || {};
 
 	APP.API = {};
 	APP.API.Config = {
@@ -28,7 +28,9 @@
 			}
 			var sounds = response.sounds;
 			sounds.forEach(function(val, index, array){
-				callback(val);
+				if (typeof callback === 'function') {
+					callback(val);
+				}
 			});
 		};
 
@@ -39,4 +41,4 @@
 		});
 	};
 
-})(this);
+})();

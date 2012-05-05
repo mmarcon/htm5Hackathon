@@ -30,15 +30,18 @@
 	<body>
 		<div id="mapContainer"></div>
 		<img class="listener" src="arrow.png"></img>
+		<script src="API.js"></script>
 		<script src="audio.js"></script>
 		<script src="keyboard.js"></script>
 		<script src="freesound-data.js"></script>
 		<script>
 		(function() {
-			var APP = APP || {};
+			var APP = window.APP || {},
 		    init = function() {
 		    	APP.ListenerObj = new APP.Listener();
 		    	APP.ListenerObj.bindKeyboardEvents();
+		    	APP.freesound = new APP.API.Freesound();
+		    	APP.freesound.aSounds = [];
 				
 		        // Authentication set-up is the first thing that you must do with the API 
 		        nokia.maps.util.ApplicationContext.set({
@@ -54,7 +57,7 @@
 
 				// This makes sure the map is always the right size
 		        // $(window).resize(ensureSize);
-		    };
+		    },
 
 		    createMap = function(position) {
 		    	position.coords = position.coords || {"latitude": 52.51, "longitude": 13.4};
@@ -78,14 +81,38 @@
 			    APP.ListenerObj.setLatLng(position.coords.latitude, position.coords.longitude);
 			    APP.map = map;
 			    APP.infoBubbles = infoBubbles;
-			    setUpTestData();
-		    };
+			    Audio.setListenerPosition(APP.ListenerObj.getPosition());
+			    var vp = APP.map.getViewBounds();
+			    APP.freesound.retrieveSoundsFor({minLat: vp.bottomRight.latitude,
+			    	                             minLng: vp.topLeft.longitude,
+			    	                             maxLat: vp.topLeft.latitude,
+			    	                             maxLng: vp.bottomRight.longitude},
+			    	                             addSound);
+		    },
 
 		    ensureSize = function() {
 		        // $('#mapContainer').height($('body').height() - $('#header').height());
+		    },
+
+		    addSound = function(sound) {
+		    	var soundObj = Audio.createSource();
+		    	Audio.setAudioSource(soundObj, sound['preview-hq-mp3']);
+		    	soundObj.panner.setPosition(sound.geotag.lon, sound.geotag.lat, 0);
+		    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
+		        marker.text = sound.tags.join(', ');
+		        marker.coord = {latitude: sound.geotag.lat, longitude: sound.geotag.lon};
+
+		        marker.addListener("click", function (evt) {
+				    APP.infoBubbles.addBubble(this.text, this.coord);
+				    evt.preventDefault();
+				    evt.stopPropagation();
+				});
+		        APP.map.objects.add(marker);
+		        soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
+				APP.freesound.aSounds.push(soundObj);
 		    };
 
-		    var APP = window.APP = {}, L;
+		    var L;
 
 		    APP.Listener = function(initialPos){
 		    	this.domObj = $('.listener')[0];
