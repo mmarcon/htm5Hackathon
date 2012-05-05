@@ -34,7 +34,10 @@
 		<script src="freesound-data.js"></script>
 		<script>
 		(function() {
+			var APP = APP || {};
 		    init = function() {
+		    	APP.ListenerObj = new APP.Listener();
+		    	APP.ListenerObj.bindKeyboardEvents();
 				
 		        // Authentication set-up is the first thing that you must do with the API 
 		        nokia.maps.util.ApplicationContext.set({
@@ -54,7 +57,8 @@
 
 		    createMap = function(position) {
 		    	position.coords = position.coords || {"latitude": 52.51, "longitude": 13.4};
-		        var mapContainer = document.getElementById("mapContainer"),
+		    	var infoBubbles = new nokia.maps.map.component.InfoBubbles(),
+		        	mapContainer = document.getElementById("mapContainer"),
 		        	map = new nokia.maps.map.Display(mapContainer, {
 		            center: [position.coords.latitude, position.coords.longitude],
 		            zoomLevel: 14,
@@ -66,10 +70,14 @@
 		                new nokia.maps.map.component.PublicTransport(),
 		                new nokia.maps.map.component.Overview(),
 		                new nokia.maps.map.component.ScaleBar(),
-		                new nokia.maps.positioning.component.Positioning()
+		                new nokia.maps.positioning.component.Positioning(),
+		                infoBubbles
 		                ]
 		        });
-			    a.setLatLng(position.coords.latitude, position.coords.longitude);
+			    APP.ListenerObj.setLatLng(position.coords.latitude, position.coords.longitude);
+			    APP.map = map;
+			    APP.infoBubbles = infoBubbles;
+			    setUpTestData();
 		    };
 
 		    ensureSize = function() {
@@ -105,26 +113,60 @@
 		    	return this.pos.orientation;
 		    };
 
-		    L.vendorPrefixed = function(s){return eval(0+"O-Moz-Webkit-Ms-".replace(/.*?-|$/g,"||(s='$&"+s+"')in new Image().style&&s").replace(/-(.)/g,"'+'$1'.toUpperCase()+'"))}
+		    L.vendorPrefixed = function(s){return eval(0+"O-Moz-Webkit-Ms-".replace(/.*?-|$/g,"||(s='$&"+s+"')in new Image().style&&s").replace(/-(.)/g,"'+'$1'.toUpperCase()+'"))};
+
+		    L.bindKeyboardEvents = function() {
+		    	var self = this;
+		    	$(document).on('keydown', function(e){
+		    		switch(e.which){
+		    			case 38:
+		    				var newX = Math.sin(self.getOrientation()) * 10,
+		    					newY = Math.cos(self.getOrientation()) * -10;
+		    				APP.map.pan(0, 0, newX, newY, 'default');
+		    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
+		    				break;
+						case 37:
+							self.setOrientation(self.getOrientation()-0.1);
+							break;
+						case 40:
+							var newX = Math.sin(self.getOrientation()) * -10,
+		    					newY = Math.cos(self.getOrientation()) * 10;
+		    				APP.map.pan(0, 0, newX, newY, 'default');
+		    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
+							break;
+						case 39:
+							self.setOrientation(self.getOrientation()+0.1);
+							break;
+		    		}
+		    	});
+		    };
 
 		    var setUpTestData = function() {
 		        Audio.setListenerPosition({lat:52.5233,lng:13.4127,orientation:0});
 		    	fsAudio = [];
-	    		for (var i = 0; i < Math.min(10, fs.sounds.length); i++) {
+
+	    		for (var i = 0; i < Math.min(2, fs.sounds.length); i++) {
 			        fsAudio[i] = Audio.createSource();
 			        Audio.setAudioSource(fsAudio[i], fs.sounds[i]['preview-hq-mp3']);
-			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lat, fs.sounds[i]['geotag'].lon, 0)
+			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lat, fs.sounds[i]['geotag'].lon, 0);
+			        var marker = new nokia.maps.map.StandardMarker({latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon});
+			        marker.text = fs.sounds[i]['tags'].join(', ');
+			        marker.coord = {latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon};
+
+			        marker.addListener("click", function (evt) {
+					    APP.infoBubbles.addBubble(this.text, this.coord);
+					    evt.preventDefault();
+					    evt.stopPropagation();
+					});
+			        APP.map.objects.add(marker);
+
+
 			        fsAudio[i].source.noteOn(Audio.getCurrentTime() + 0.020);
 			    }
 		    };
 
 		    $(function() {
-		        a = new APP.Listener({lat:52.5233,lng:13.4127,orientation:0});
-
 		        init();
-
-
-				setUpTestData();
 		    });
 		})();
 		</script>
