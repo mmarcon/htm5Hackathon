@@ -1,5 +1,19 @@
 http://ws.audioscrobbler.com/2.0/?method=geo.getevents&lat=52.5233&long=13.4127&api_key=b25b959554ed76058ac220b7b2e0a026
 
+LastFM:
+API Key is 6c9b80ce8e73b74ac58e22c0657d942c
+secret is e9cedf38943eb1e162d2ecad995f6975
+http://ws.audioscrobbler.com/2.0/?method=geo.getevents&lat={LATITUDE}&long={LONGITUDE}&api_key=6c9b80ce8e73b74ac58e22c0657d942c
+
+Deezer:
+No key required
+http://api.deezer.com/2.0/search?q={ARTIST_NAME}
+
+FreeSound:
+API Key is 1142723002b040a0b1f378dc8787bb70
+http://www.freesound.org/api/sounds/geotag/?min_lat={BB_MIN_LAT}&min_lon={BB_MIN_LNG}&max_lat={BB_MAX_LAT}&max_lon={BB_MAX_LNG}&api_key=1142723002b040a0b1f378dc8787bb70
+
+
 <?xml version="1.0" encoding="utf-8"?>
 <lfm status="ok">
 <events xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" location="Madrid, Spain" page="1" perPage="10" totalPages="23" total="224" festivalsonly="0" tag="">
