@@ -5,7 +5,8 @@
 	APP.API.Config = {
 		freeSoundBaseURL: 'http://www.freesound.org/api/sounds/geotag/?min_lat={BB_MIN_LAT}&min_lon={BB_MIN_LNG}&max_lat={BB_MAX_LAT}&max_lon={BB_MAX_LNG}&sounds_per_page=5&api_key=1142723002b040a0b1f378dc8787bb70',
 		lastFMBaseURL: 'http://ws.audioscrobbler.com/2.0/?method=geo.getevents&lat={LATITUDE}&long={LONGITUDE}&api_key=6c9b80ce8e73b74ac58e22c0657d942c&format=json',
-		deezerBaseURL: 'http://api.deezer.com/2.0/search?q={ARTIST_NAME}&output=jsonp'
+		deezerBaseURL: 'http://api.deezer.com/2.0/search?q={ARTIST_NAME}&output=jsonp',
+		proxyURL: 'http://localhost:8000/proxy'
 	};
 
 	var F, L, D;
@@ -133,7 +134,7 @@
 			}
 			var data = {
 				title: response.data[0].title || '',
-				preview: response.data[0].preview || '',
+				preview: APP.API.Config.proxyURL + '?url=' + response.data[0].preview || '',
 				artist: response.data[0].artist.name || '',
 				album: {
 					title: response.data[0].album.title,

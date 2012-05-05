@@ -119,9 +119,9 @@
 		    	var soundObj = Audio.createSource();
 		    	Audio.setAudioSource(soundObj, event.preview);
 		    	soundObj.panner.setPosition(event.meta.venue.location.lng, event.meta.venue.location.lat, 0);
-		    	var marker = new nokia.maps.map.StandardMarker({latitude: event.meta.venue.location.lat, longitude: event.meta.venue.location.lng}, {brush: {color: '#cc0000'}});
+		    	var marker = new nokia.maps.map.StandardMarker({latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)}, {brush: {color: '#cc0000'}});
 		        marker.text = event.artist;
-		        marker.coord = {latitude: event.meta.venue.location.lat, longitude: event.meta.venue.location.lng};
+		        marker.coord = {latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)};
 
 		        marker.addListener("click", function (evt) {
 				    APP.infoBubbles.addBubble(this.text, this.coord);
