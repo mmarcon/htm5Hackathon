@@ -31,6 +31,7 @@
 		<div id="mapContainer"></div>
 		<img class="listener" src="arrow.png"></img>
 		<script src="audio.js"></script>
+		<script src="keyboard.js"></script>
 		<script src="freesound-data.js"></script>
 		<script>
 		(function() {
@@ -121,28 +122,26 @@
 
 		    L.bindKeyboardEvents = function() {
 		    	var self = this;
-		    	$(document).on('keydown', function(e){
-		    		switch(e.which){
-		    			case 38:
-		    				var newX = Math.sin(self.getOrientation()) * 10,
-		    					newY = Math.cos(self.getOrientation()) * -10;
-		    				APP.map.pan(0, 0, newX, newY, 'default');
-		    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
-		    				break;
-						case 37:
-							self.setOrientation(self.getOrientation()-0.1);
-							break;
-						case 40:
-							var newX = Math.sin(self.getOrientation()) * -10,
-		    					newY = Math.cos(self.getOrientation()) * 10;
-		    				APP.map.pan(0, 0, newX, newY, 'default');
-		    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
-							break;
-						case 39:
-							self.setOrientation(self.getOrientation()+0.1);
-							break;
-		    		}
-		    	});
+				KeyboardController({
+				    37: function() { 
+						self.setOrientation(self.getOrientation()-0.1);
+					},
+				    38: function() { 
+	    				var newX = Math.sin(self.getOrientation()) * 10,
+	    					newY = Math.cos(self.getOrientation()) * -10;
+	    				APP.map.pan(0, 0, newX, newY, 'default');
+	    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
+					},
+				    39: function() { 
+						self.setOrientation(self.getOrientation()+0.1);
+					},
+				    40: function() { 
+						var newX = Math.sin(self.getOrientation()) * -10,
+	    					newY = Math.cos(self.getOrientation()) * 10;
+	    				APP.map.pan(0, 0, newX, newY, 'default');
+	    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
+					}
+				}, 20);
 		    };
 
 		    var setUpTestData = function() {
