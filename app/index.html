@@ -64,6 +64,7 @@
 		    	APP.freesound.aSounds = [];
 		    	APP.lastfm = new APP.API.LastFM();
 		    	APP.lastfm.aSounds = [];
+		    	APP.lastfmMarkers = [];
 				APP.scaleFactor = 500;
 				
 		        // Authentication set-up is the first thing that you must do with the API 
@@ -152,8 +153,7 @@
 			        marker.text = event.artist;
 			        marker.coord = {latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)};
 			        marker.img = event.album.cover || null;
-
-			        marker.addListener("click", function (evt) {
+			        marker.showInfo = function(){
 			        	if (this.img) {
 			        		var dom = '<div class="lastfm-bubble">';
 			        		dom += '<img src="'+this.img+'" width="60px"/>';
@@ -163,14 +163,24 @@
 			        	else {
 			        		APP.infoBubbles.addBubble(this.text, this.coord);
 			        	}
-					 	evt.preventDefault();
+			        };
+
+			        marker.addListener("click", function (evt) {
+			        	this.showInfo();
+			        	evt.preventDefault();
 					 	evt.stopPropagation();
 					});
+
 			        APP.map.objects.add(marker);
+			        APP.lastfmMarkers.push(marker);
 
 				    APP.lastfm.aSounds.push(soundObj);
 				    APP.LoadingIndicator.resourceLoaded();
 				});
+		    },
+
+		    distance = function(p1, p2){
+		    	return Math.sqrt(Math.pow((p2.x-p1.x), 2) + Math.pow((p2.y-p1.y), 2));
 		    };
 
 		    var L;
@@ -231,6 +241,16 @@
 					}
 				}, 20);
 				$(document).on('keydown', function(e) {if(e.which===32) {generateSoundscape();}});
+				$(document).on('keyup', function(){
+					APP.lastfmMarkers.forEach(function(marker, i, a){
+						var mpix = APP.map.geoToPixel(marker.coordinate),
+							mappix = APP.map.geoToPixel(APP.map.center);
+						if (distance(mpix, mappix) < 70) {
+							marker.showInfo();
+						}
+
+					});
+				});
 		    };
 
 		    $(function() {
