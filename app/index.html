@@ -30,7 +30,7 @@
 			width: 50px;
 			height: 50px;
 			margin: -10px 0 0 -25px;
-			background: transparent url(loader.gif) center bottom no-repeat;
+			background: transparent url(images/loader.gif) center bottom no-repeat;
 		}
 
 		.lastfm-bubble {
@@ -50,6 +50,48 @@
 			white-space: normal;
 			font-family: 'Share';
 		}
+		
+		.button {
+		   border: 1px solid #e6e6e6;
+		   background: #cdcdcd;
+		   background: -webkit-gradient(linear, left top, left bottom, from(#ebebeb), to(#cdcdcd));
+		   background: -webkit-linear-gradient(top, #ebebeb, #cdcdcd);
+		   background: -moz-linear-gradient(top, #ebebeb, #cdcdcd);
+		   background: -ms-linear-gradient(top, #ebebeb, #cdcdcd);
+		   background: -o-linear-gradient(top, #ebebeb, #cdcdcd);
+		   -webkit-border-radius: 3px;
+		   -moz-border-radius: 3px;
+		   border-radius: 3px;
+		   text-shadow: rgba(0,0,0,.4) 0 1px 0;
+		   color: #333;
+		   font-size: 13px;
+		   font-family: Georgia, serif;
+		   text-decoration: none;
+		   vertical-align: middle;
+		   position: absolute;
+		   width: 26px;
+		   height: 26px;
+	   }
+		.button:hover {
+		   border-color: #fff;
+		   color: #36bae0;
+		   cursor:pointer;
+		   }
+		.button:active, .button.active {
+		   border-color: #fff;
+		   color:white;
+		   background: #333;
+		   }
+		   .button span {display:block;background:50% 50% no-repeat;width:100%;height:100%;}
+		   .generate-button {top: 36px;left:3px;}
+		   .generate-button span {background-image:url(images/sprite.png);background-position:3px 4px;}
+		   .generate-button.active span {display:block;background:url(images/generate-loading.gif) 50% 50% no-repeat;width:100%;height:100%;}
+		   .lastfm-button {top: 69px;left:3px;}
+		   .lastfm-button span {background-image:url(images/sprite.png);background-position:1px -38px;}
+		   .lastfm-button.active span {background-image:url(images/sprite.png);background-position:-23px -38px;}
+		   .freesound-button {top: 102px;left:3px;}
+		   .freesound-button span {background-image:url(images/sprite.png);background-position:2px -17px;}
+		   .freesound-button.active span {background-image:url(images/sprite.png);background-position:-22px -17px;}
 
 		</style>
 		<script src="http://api.maps.nokia.com/2.2.0/jsl.js"></script>
@@ -58,7 +100,10 @@
 	</head>
 	<body>
 		<div id="mapContainer"></div>
-		<img class="listener" src="hamster.gif"></img>
+		<img class="listener" src="images/hamster.gif"></img>
+		<div class="button generate-button"><span></span></div>
+		<div class="button lastfm-button"><span></span></div>
+		<div class="button freesound-button"><span></span></div>
 		<script src="loader-manager.js"></script>
 		<script src="API.js"></script>
 		<script src="audio.js"></script>
@@ -76,6 +121,7 @@
 		    	APP.lastfm.aSounds = [];
 		    	APP.lastfmMarkers = [];
 				APP.scaleFactor = 500;
+				APP.activeServices = {freesound: true, lastfm: false};
 				
 		        // Authentication set-up is the first thing that you must do with the API 
 		        nokia.maps.util.ApplicationContext.set({
@@ -121,12 +167,16 @@
 			    var vp = APP.map.getViewBounds();
 				var bbheight = vp.topLeft.latitude-vp.bottomRight.latitude;
 				var bbwidth = vp.bottomRight.longitude - vp.topLeft.longitude;
-			    APP.freesound.retrieveSoundsFor({minLat: vp.bottomRight.latitude - bbheight,
-			    	                             minLng: vp.topLeft.longitude - bbwidth,
-			    	                             maxLat: vp.topLeft.latitude + bbheight,
-			    	                             maxLng: vp.bottomRight.longitude + bbwidth},
-			    	                             addFreesoundSound);
-			    APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
+				if(APP.activeServices.freesound) {
+				    APP.freesound.retrieveSoundsFor({minLat: vp.bottomRight.latitude - bbheight,
+				    	                             minLng: vp.topLeft.longitude - bbwidth,
+				    	                             maxLat: vp.topLeft.latitude + bbheight,
+				    	                             maxLng: vp.bottomRight.longitude + bbwidth},
+				    	                             addFreesoundSound);
+				}
+				if(APP.activeServices.lastfm) {
+					APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
+				}
 			},
 
 			showMarkerInfo = function(){
@@ -141,6 +191,25 @@
 	        	}
 			},
 
+			
+			toggleService = function(serviceName) {
+				APP.activeServices[serviceName] = !APP.activeServices[serviceName];
+				updateServiceUI();
+			},
+			
+			updateServiceUI = function() {
+				if(APP.activeServices.freesound) {
+					$('.freesound-button').addClass('active');
+				} else {
+					$('.freesound-button').removeClass('active');
+				}
+				if(APP.activeServices.lastfm) {
+					$('.lastfm-button').addClass('active');
+				} else {
+					$('.lastfm-button').removeClass('active');
+				}
+			},
+			
 		    addFreesoundSound = function(sound) {
 				if(sound.duration>=10) {
 			    	var soundObj = Audio.createSource();
@@ -273,9 +342,13 @@
 					});
 				});
 		    };
-
+			
 		    $(function() {
 		        init();
+				$('.generate-button').on('click', function() {generateSoundscape();});
+				$('.lastfm-button').on('click', function() {toggleService('lastfm')});
+				$('.freesound-button').on('click', function() {toggleService('freesound')});
+				updateServiceUI();
 				// $(window).on('unload', function(){
 				// 	for(a=0;a<APP.lastfm.aSounds.length;a++) {
 				// 		APP.lastfm.aSounds[a].panner.disconnect();

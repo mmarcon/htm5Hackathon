@@ -8,10 +8,12 @@
 		L = APP.LoadingIndicator = {};
 
 	showLoadingIndicator = function(){
-		loadingIndicator = loadingIndicator || $('<div class="loading-indicator"></div>').appendTo('body');
+		$('.generate-button').addClass('active');
+		loadingIndicator = loadingIndicator || $('<div class="images/loading-indicator"></div>').appendTo('body');
 		loadingIndicator.show();
 	};
 	hideLoadingIndicator = function(){
+		$('.generate-button').removeClass('active');
 		loadingIndicator && loadingIndicator.hide();
 	};
 
