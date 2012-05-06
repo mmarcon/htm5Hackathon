@@ -1,383 +1,464 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Nokia Maps Mashup</title>
-		<style>
-		@import url(http://fonts.googleapis.com/css?family=Share);
-		html,body, #mapContainer {
-			font-family: sans-serif;
-			background: #fff;
-			color: #444;
-			height: 100%;
-			padding:0;
-			margin:0;
-		}
+    
+    <head>
+        <meta charset="utf-8">
+        <title>Nokia Maps Mashup</title>
+        <style>
+            @import url(http://fonts.googleapis.com/css?family=Share);
+            html, body, #mapContainer {
+                font-family: sans-serif;
+                background: #fff;
+                color: #444;
+                height: 100%;
+                padding:0;
+                margin:0;
+            }
+            .listener {
+                width: 35px;
+                height: 35px;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin: -17px 0 0 -17px;
+            }
+            .loading-indicator {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 50px;
+                height: 50px;
+                margin: -10px 0 0 -25px;
+                background: transparent url(images/loader.gif) center bottom no-repeat;
+            }
+            .lastfm-bubble {
+                width: 160px;
+            }
+            .lastfm-bubble img {
+                display: block;
+                margin: 5px auto;
+                border-radius: 3px;
+            }
+            .lastfm-bubble>p {
+                color: #fff;
+                text-align: center;
+                font-size: 16px;
+                white-space: normal;
+                font-family:'Share';
+            }
+            .button {
+                border: 1px solid #e6e6e6;
+                background: #cdcdcd;
+                background: -webkit-gradient(linear, left top, left bottom, from(#ebebeb), to(#cdcdcd));
+                background: -webkit-linear-gradient(top, #ebebeb, #cdcdcd);
+                background: -moz-linear-gradient(top, #ebebeb, #cdcdcd);
+                background: -ms-linear-gradient(top, #ebebeb, #cdcdcd);
+                background: -o-linear-gradient(top, #ebebeb, #cdcdcd);
+                -webkit-border-radius: 3px;
+                -moz-border-radius: 3px;
+                border-radius: 3px;
+                text-shadow: rgba(0, 0, 0, .4) 0 1px 0;
+                color: #333;
+                font-size: 13px;
+                font-family: Georgia, serif;
+                text-decoration: none;
+                vertical-align: middle;
+                position: absolute;
+                width: 26px;
+                height: 26px;
+            }
+            .button:hover {
+                border-color: #fff;
+                color: #36bae0;
+                cursor:pointer;
+            }
+            .button:active, .button.active {
+                border-color: #fff;
+                color:white;
+                background: #333;
+            }
+            .button span {
+                display:block;
+                background:50% 50% no-repeat;
+                width:100%;
+                height:100%;
+            }
+            .generate-button {
+                top: 36px;
+                left:3px;
+            }
+            .generate-button span {
+                background-image:url(images/sprite.png);
+                background-position:3px 4px;
+            }
+            .generate-button.active span {
+                display:block;
+                background:url(images/generate-loading.gif) 50% 50% no-repeat;
+                width:100%;
+                height:100%;
+            }
+            .lastfm-button {
+                top: 69px;
+                left:3px;
+            }
+            .lastfm-button span {
+                background-image:url(images/sprite.png);
+                background-position:1px -38px;
+            }
+            .lastfm-button.active span {
+                background-image:url(images/sprite.png);
+                background-position:-23px -38px;
+            }
+            .freesound-button {
+                top: 102px;
+                left:3px;
+            }
+            .freesound-button span {
+                background-image:url(images/sprite.png);
+                background-position:2px -17px;
+            }
+            .freesound-button.active span {
+                background-image:url(images/sprite.png);
+                background-position:-22px -17px;
+            }
+        </style>
+        <script src="http://api.maps.nokia.com/2.2.0/jsl.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+        <link rel="icon" href="http://maps.nokia.com/favicon.ico">
+    </head>
+    
+    <body>
+        <div id="mapContainer"></div>
+        <img class="listener" src="images/hamster.gif"></img>
+        <div class="button generate-button">
+            <span></span>
+        </div>
+        <div class="button lastfm-button">
+            <span></span>
+        </div>
+        <div class="button freesound-button">
+            <span></span>
+        </div>
+        <script src="loader-manager.js"></script>
+        <script src="API.js"></script>
+        <script src="audio.js"></script>
+        <script src="keyboard.js"></script>
+        <script>
+            (function () {
+                var APP = window.APP || {},
+                    init = function () {
+                        APP.ListenerObj = new APP.Listener();
+                        APP.ListenerObj.bindKeyboardEvents();
+                        APP.freesound = new APP.API.Freesound();
+                        APP.freesound.aSounds = [];
+                        APP.freesoundMarkers = [];
+                        APP.lastfm = new APP.API.LastFM();
+                        APP.lastfm.aSounds = [];
+                        APP.lastfmMarkers = [];
+                        APP.scaleFactor = 500;
+                        APP.activeServices = {
+                            freesound: true,
+                            lastfm: false
+                        };
 
-		.listener {
-			width: 35px;
-			height: 35px;
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			margin: -17px 0 0 -17px;
-		}
+                        // Authentication set-up is the first thing that you must do with the API 
+                        nokia.maps.util.ApplicationContext.set({
+                            "appId": "YOUR_APP_ID",
+                            "authenticationToken": "YOUR_AUTHENTICATION_TOKEN"
+                        });
 
-		.loading-indicator {
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			width: 50px;
-			height: 50px;
-			margin: -10px 0 0 -25px;
-			background: transparent url(images/loader.gif) center bottom no-repeat;
-		}
-
-		.lastfm-bubble {
-			width: 160px;
-		}
-
-		.lastfm-bubble img {
-			display: block;
-			margin: 5px auto;
-			border-radius: 3px;
-		}
-
-		.lastfm-bubble>p {
-			color: #fff;
-			text-align: center;
-			font-size: 16px;
-			white-space: normal;
-			font-family: 'Share';
-		}
-		
-		.button {
-		   border: 1px solid #e6e6e6;
-		   background: #cdcdcd;
-		   background: -webkit-gradient(linear, left top, left bottom, from(#ebebeb), to(#cdcdcd));
-		   background: -webkit-linear-gradient(top, #ebebeb, #cdcdcd);
-		   background: -moz-linear-gradient(top, #ebebeb, #cdcdcd);
-		   background: -ms-linear-gradient(top, #ebebeb, #cdcdcd);
-		   background: -o-linear-gradient(top, #ebebeb, #cdcdcd);
-		   -webkit-border-radius: 3px;
-		   -moz-border-radius: 3px;
-		   border-radius: 3px;
-		   text-shadow: rgba(0,0,0,.4) 0 1px 0;
-		   color: #333;
-		   font-size: 13px;
-		   font-family: Georgia, serif;
-		   text-decoration: none;
-		   vertical-align: middle;
-		   position: absolute;
-		   width: 26px;
-		   height: 26px;
-	   }
-		.button:hover {
-		   border-color: #fff;
-		   color: #36bae0;
-		   cursor:pointer;
-		   }
-		.button:active, .button.active {
-		   border-color: #fff;
-		   color:white;
-		   background: #333;
-		   }
-		   .button span {display:block;background:50% 50% no-repeat;width:100%;height:100%;}
-		   .generate-button {top: 36px;left:3px;}
-		   .generate-button span {background-image:url(images/sprite.png);background-position:3px 4px;}
-		   .generate-button.active span {display:block;background:url(images/generate-loading.gif) 50% 50% no-repeat;width:100%;height:100%;}
-		   .lastfm-button {top: 69px;left:3px;}
-		   .lastfm-button span {background-image:url(images/sprite.png);background-position:1px -38px;}
-		   .lastfm-button.active span {background-image:url(images/sprite.png);background-position:-23px -38px;}
-		   .freesound-button {top: 102px;left:3px;}
-		   .freesound-button span {background-image:url(images/sprite.png);background-position:2px -17px;}
-		   .freesound-button.active span {background-image:url(images/sprite.png);background-position:-22px -17px;}
-
-		</style>
-		<script src="http://api.maps.nokia.com/2.2.0/jsl.js"></script>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
-		<link rel="icon" href="http://maps.nokia.com/favicon.ico">
-	</head>
-	<body>
-		<div id="mapContainer"></div>
-		<img class="listener" src="images/hamster.gif"></img>
-		<div class="button generate-button"><span></span></div>
-		<div class="button lastfm-button"><span></span></div>
-		<div class="button freesound-button"><span></span></div>
-		<script src="loader-manager.js"></script>
-		<script src="API.js"></script>
-		<script src="audio.js"></script>
-		<script src="keyboard.js"></script>
-		<script>
-		(function() {
-			var APP = window.APP || {},
-		    init = function() {
-		    	APP.ListenerObj = new APP.Listener();
-		    	APP.ListenerObj.bindKeyboardEvents();
-		    	APP.freesound = new APP.API.Freesound();
-		    	APP.freesound.aSounds = [];
-		    	APP.freesoundMarkers = [];
-		    	APP.lastfm = new APP.API.LastFM();
-		    	APP.lastfm.aSounds = [];
-		    	APP.lastfmMarkers = [];
-				APP.scaleFactor = 500;
-				APP.activeServices = {freesound: true, lastfm: false};
-				
-		        // Authentication set-up is the first thing that you must do with the API 
-		        nokia.maps.util.ApplicationContext.set({
-		            "appId": "YOUR_APP_ID",
-		            "authenticationToken": "YOUR_AUTHENTICATION_TOKEN"
-		        });
-
-				if(!window.location.param.lat) {
-	        		navigator.geolocation.getCurrentPosition(createMap, createMap);
-				} else {
-					createMap({coords:{latitude:window.location.param.lat*1,longitude:window.location.param.lng*1}})
-				}
+                        if (!window.location.param.lat) {
+                            navigator.geolocation.getCurrentPosition(createMap, createMap);
+                        } else {
+                            createMap({
+                                coords: {
+                                    latitude: window.location.param.lat * 1,
+                                    longitude: window.location.param.lng * 1
+                                }
+                            })
+                        }
 
 
-		    },
+                    },
 
-		    createMap = function(position) {
-		    	position.coords = position.coords || {"latitude": 52.51, "longitude": 13.4};
-		    	var infoBubbles = new nokia.maps.map.component.InfoBubbles(),
-		        	mapContainer = document.getElementById("mapContainer"),
-		        	map = new nokia.maps.map.Display(mapContainer, {
-		            center: [position.coords.latitude, position.coords.longitude],
-		            zoomLevel: 14,
-		            components: [
-		                new nokia.maps.map.component.ZoomBar(),
-		                new nokia.maps.map.component.Behavior(),
-		                new nokia.maps.map.component.TypeSelector(),
-		                new nokia.maps.map.component.Traffic(),
-		                new nokia.maps.map.component.PublicTransport(),
-		                new nokia.maps.map.component.Overview(),
-		                new nokia.maps.map.component.ScaleBar(),
-		                new nokia.maps.positioning.component.Positioning(),
-		                infoBubbles
-		                ]
-		        });
-			    APP.ListenerObj.setLatLng(position.coords.latitude, position.coords.longitude);
-			    APP.map = map;
-			    APP.infoBubbles = infoBubbles;
-			    Audio.setListenerPosition(APP.ListenerObj.getPosition());
-			},
-			
-			generateSoundscape = function() {
-			    var vp = APP.map.getViewBounds();
-				var bbheight = vp.topLeft.latitude-vp.bottomRight.latitude;
-				var bbwidth = vp.bottomRight.longitude - vp.topLeft.longitude;
-				if(APP.activeServices.freesound) {
-				    APP.freesound.retrieveSoundsFor({minLat: vp.bottomRight.latitude - bbheight,
-				    	                             minLng: vp.topLeft.longitude - bbwidth,
-				    	                             maxLat: vp.topLeft.latitude + bbheight,
-				    	                             maxLng: vp.bottomRight.longitude + bbwidth},
-				    	                             addFreesoundSound);
-				}
-				if(APP.activeServices.lastfm) {
-					APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
-				}
-			},
+                    createMap = function (position) {
+                        position.coords = position.coords || {
+                            "latitude": 52.51,
+                            "longitude": 13.4
+                        };
+                        var infoBubbles = new nokia.maps.map.component.InfoBubbles(),
+                            mapContainer = document.getElementById("mapContainer"),
+                            map = new nokia.maps.map.Display(mapContainer, {
+                                center: [position.coords.latitude, position.coords.longitude],
+                                zoomLevel: 14,
+                                components: [
+                                new nokia.maps.map.component.ZoomBar(), new nokia.maps.map.component.Behavior(), new nokia.maps.map.component.TypeSelector(), new nokia.maps.map.component.Traffic(), new nokia.maps.map.component.PublicTransport(), new nokia.maps.map.component.Overview(), new nokia.maps.map.component.ScaleBar(), new nokia.maps.positioning.component.Positioning(), infoBubbles]
+                            });
+                        APP.ListenerObj.setLatLng(position.coords.latitude, position.coords.longitude);
+                        APP.map = map;
+                        APP.infoBubbles = infoBubbles;
+                        Audio.setListenerPosition(APP.ListenerObj.getPosition());
+                    },
 
-			showMarkerInfo = function(){
-				if (this.img) {
-	        		var dom = '<div class="lastfm-bubble">';
-	        		dom += '<img src="'+this.img+'"/>';
-	        		dom += '<p>' + this.text + '</p></div>';
-	        		APP.infoBubbles.addBubble(dom, this.coord);
-	        	}
-	        	else {
-	        		APP.infoBubbles.addBubble(this.text, this.coord);
-	        	}
-			},
+                    generateSoundscape = function () {
+                        var vp = APP.map.getViewBounds();
+                        var bbheight = vp.topLeft.latitude - vp.bottomRight.latitude;
+                        var bbwidth = vp.bottomRight.longitude - vp.topLeft.longitude;
+                        if (APP.activeServices.freesound) {
+                            APP.freesound.retrieveSoundsFor({
+                                minLat: vp.bottomRight.latitude - bbheight,
+                                minLng: vp.topLeft.longitude - bbwidth,
+                                maxLat: vp.topLeft.latitude + bbheight,
+                                maxLng: vp.bottomRight.longitude + bbwidth
+                            }, addFreesoundSound);
+                        }
+                        if (APP.activeServices.lastfm) {
+                            APP.lastfm.retrieveEventsFor({
+                                lat: APP.map.center.latitude,
+                                lng: APP.map.center.longitude
+                            }, addLastFMEvent);
+                        }
+                    },
 
-			
-			toggleService = function(serviceName) {
-				APP.activeServices[serviceName] = !APP.activeServices[serviceName];
-				updateServiceUI();
-			},
-			
-			updateServiceUI = function() {
-				if(APP.activeServices.freesound) {
-					$('.freesound-button').addClass('active');
-				} else {
-					$('.freesound-button').removeClass('active');
-				}
-				if(APP.activeServices.lastfm) {
-					$('.lastfm-button').addClass('active');
-				} else {
-					$('.lastfm-button').removeClass('active');
-				}
-			},
-			
-		    addFreesoundSound = function(sound) {
-				if(sound.duration>=10) {
-			    	var soundObj = Audio.createSource();
-			    	Audio.setAudioSource(soundObj, sound['preview-lq-mp3']);
-			    	soundObj.panner.setPosition(sound.geotag.lon*APP.scaleFactor, sound.geotag.lat*APP.scaleFactor, 0);
-			    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
-			        marker.text = sound.tags.join(', ');
-			        marker.coord = {latitude: sound.geotag.lat, longitude: sound.geotag.lon};
-			        marker.img = sound.flickholdr;
-			        //Preload
-			        new Image().src = marker.img;
+                    showMarkerInfo = function () {
+                        if (this.img) {
+                            var dom = '<div class="lastfm-bubble">';
+                            dom += '<img src="' + this.img + '"/>';
+                            dom += '<p>' + this.text + '</p></div>';
+                            APP.infoBubbles.addBubble(dom, this.coord);
+                        } else {
+                            APP.infoBubbles.addBubble(this.text, this.coord);
+                        }
+                    },
 
-			        marker.showInfo = showMarkerInfo;
 
-			        marker.addListener("click", function (evt) {
-						this.showInfo();
-						evt.preventDefault();
-						evt.stopPropagation();
-					});
-			        APP.map.objects.add(marker);
-			        APP.freesoundMarkers.push(marker);
+                    toggleService = function (serviceName) {
+                        APP.activeServices[serviceName] = !APP.activeServices[serviceName];
+                        updateServiceUI();
+                    },
 
-			        soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
-					APP.freesound.aSounds.push(soundObj);
-				}
-		    },
+                    updateServiceUI = function () {
+                        if (APP.activeServices.freesound) {
+                            $('.freesound-button').addClass('active');
+                        } else {
+                            $('.freesound-button').removeClass('active');
+                        }
+                        if (APP.activeServices.lastfm) {
+                            $('.lastfm-button').addClass('active');
+                        } else {
+                            $('.lastfm-button').removeClass('active');
+                        }
+                    },
 
-		    addLastFMEvent = function(event) {
-		    	APP.LoadingIndicator.resourceIsLoading();
-				var mediaElement = document.createElement('audio');
-				mediaElement.src = event.preview;
-				mediaElement.autoplay = true;
-				mediaElement.loop = true;
-				$(mediaElement).on('canplay',function() {
-			    	var soundObj = Audio.createSource({"mediaElement":mediaElement, "initialAudioLevel": 0.5, "initialReverbLevel": 0.5});
-			    	soundObj.panner.setPosition(event.meta.venue.location.lng*APP.scaleFactor, event.meta.venue.location.lat*APP.scaleFactor, 0);
-					
-			    	var marker = new nokia.maps.map.StandardMarker({latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)}, {brush: {color: '#cc0000'}});
-			        marker.text = event.artist;
-			        marker.coord = {latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)};
-			        marker.img = event.album.cover || null;
-			        //Preload
-			        new Image().src = marker.img;
-			        marker.showInfo = showMarkerInfo;
+                    addFreesoundSound = function (sound) {
+                        if (sound.duration >= 10) {
+                            var soundObj = Audio.createSource();
+                            Audio.setAudioSource(soundObj, sound['preview-lq-mp3']);
+                            soundObj.panner.setPosition(sound.geotag.lon * APP.scaleFactor, sound.geotag.lat * APP.scaleFactor, 0);
+                            var marker = new nokia.maps.map.StandardMarker({
+                                latitude: sound.geotag.lat,
+                                longitude: sound.geotag.lon
+                            });
+                            marker.text = sound.tags.join(', ');
+                            marker.coord = {
+                                latitude: sound.geotag.lat,
+                                longitude: sound.geotag.lon
+                            };
+                            marker.img = sound.flickholdr;
+                            //Preload
+                            new Image().src = marker.img;
 
-			        marker.addListener("click", function (evt) {
-			        	this.showInfo();
-			        	evt.preventDefault();
-					 	evt.stopPropagation();
-					});
+                            marker.showInfo = showMarkerInfo;
 
-			        APP.map.objects.add(marker);
-			        APP.lastfmMarkers.push(marker);
+                            marker.addListener("click", function (evt) {
+                                this.showInfo();
+                                evt.preventDefault();
+                                evt.stopPropagation();
+                            });
+                            APP.map.objects.add(marker);
+                            APP.freesoundMarkers.push(marker);
 
-				    APP.lastfm.aSounds.push(soundObj);
-				    APP.LoadingIndicator.resourceLoaded();
-				});
-		    },
+                            soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
+                            APP.freesound.aSounds.push(soundObj);
+                        }
+                    },
 
-		    distance = function(p1, p2){
-		    	return Math.sqrt(Math.pow((p2.x-p1.x), 2) + Math.pow((p2.y-p1.y), 2));
-		    };
+                    addLastFMEvent = function (event) {
+                        APP.LoadingIndicator.resourceIsLoading();
+                        var mediaElement = document.createElement('audio');
+                        mediaElement.src = event.preview;
+                        mediaElement.autoplay = true;
+                        mediaElement.loop = true;
+                        $(mediaElement).on('canplay', function () {
+                            var soundObj = Audio.createSource({
+                                "mediaElement": mediaElement,
+                                "initialAudioLevel": 0.5,
+                                "initialReverbLevel": 0.5
+                            });
+                            soundObj.panner.setPosition(event.meta.venue.location.lng * APP.scaleFactor, event.meta.venue.location.lat * APP.scaleFactor, 0);
 
-		    var L;
+                            var marker = new nokia.maps.map.StandardMarker({
+                                latitude: parseFloat(event.meta.venue.location.lat),
+                                longitude: parseFloat(event.meta.venue.location.lng)
+                            }, {
+                                brush: {
+                                    color: '#cc0000'
+                                }
+                            });
+                            marker.text = event.artist;
+                            marker.coord = {
+                                latitude: parseFloat(event.meta.venue.location.lat),
+                                longitude: parseFloat(event.meta.venue.location.lng)
+                            };
+                            marker.img = event.album.cover || null;
+                            //Preload
+                            new Image().src = marker.img;
+                            marker.showInfo = showMarkerInfo;
 
-		    APP.Listener = function(initialPos){
-		    	this.domObj = $('.listener')[0];
-		    	this.pos = initialPos || {lat: null, lng: null, orientation: 0};
-		    };
+                            marker.addListener("click", function (evt) {
+                                this.showInfo();
+                                evt.preventDefault();
+                                evt.stopPropagation();
+                            });
 
-		    L = APP.Listener.prototype;
+                            APP.map.objects.add(marker);
+                            APP.lastfmMarkers.push(marker);
 
-		    L.setLatLng = function(lat, lng) {
-		    	this.pos.lat = lat;
-		    	this.pos.lng = lng;
-				this.updateAudioPosition();
-		    };
+                            APP.lastfm.aSounds.push(soundObj);
+                            APP.LoadingIndicator.resourceLoaded();
+                        });
+                    },
 
-		    L.setOrientation = function(orientation) {
-		    	this.pos.orientation = orientation;
-		    	this.domObj.style[this.vendorPrefixed("transform")] = "rotate("+this.pos.orientation+"rad)";
-				this.updateAudioPosition();
-		    };
-			
-			L.updateAudioPosition = function() {
-		        Audio.setListenerPosition({lat:this.pos.lat,lng:this.pos.lng,orientation:this.pos.orientation});
-			}
+                    distance = function (p1, p2) {
+                        return Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
+                    };
 
-		    L.getPosition = function() {
-		    	return this.pos;
-		    };
+                var L;
 
-		    L.getOrientation = function() {
-		    	return this.pos.orientation;
-		    };
+                APP.Listener = function (initialPos) {
+                    this.domObj = $('.listener')[0];
+                    this.pos = initialPos || {
+                        lat: null,
+                        lng: null,
+                        orientation: 0
+                    };
+                };
 
-		    L.vendorPrefixed = function(s){return eval(0+"O-Moz-Webkit-Ms-".replace(/.*?-|$/g,"||(s='$&"+s+"')in new Image().style&&s").replace(/-(.)/g,"'+'$1'.toUpperCase()+'"))};
+                L = APP.Listener.prototype;
 
-		    L.bindKeyboardEvents = function() {
-		    	var self = this;
-				KeyboardController({
-				    37: function() { 
-						self.setOrientation(self.getOrientation()-0.1);
-					},
-				    38: function() { 
-	    				var newX = Math.sin(self.getOrientation()) * 10,
-	    					newY = Math.cos(self.getOrientation()) * -10;
-	    				APP.map.pan(0, 0, newX, newY, 'default');
-	    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
-					},
-				    39: function() { 
-						self.setOrientation(self.getOrientation()+0.1);
-					},
-				    40: function() { 
-						var newX = Math.sin(self.getOrientation()) * -10,
-	    					newY = Math.cos(self.getOrientation()) * 10;
-	    				APP.map.pan(0, 0, newX, newY, 'default');
-	    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
-					}
-				}, 20);
-				$(document).on('keydown', function(e) {if(e.which===32) {generateSoundscape();}});
-				$(document).on('keyup', function(){
-					APP.lastfmMarkers.concat(APP.freesoundMarkers).forEach(function(marker, i, a){
-						var mpix = APP.map.geoToPixel(marker.coordinate),
-							mappix = APP.map.geoToPixel(APP.map.center);
-						if (distance(mpix, mappix) < 70) {
-							marker.showInfo();
-						}
+                L.setLatLng = function (lat, lng) {
+                    this.pos.lat = lat;
+                    this.pos.lng = lng;
+                    this.updateAudioPosition();
+                };
 
-					});
-				});
-		    };
-			
-		    $(function() {
-		        init();
-				$('.generate-button').on('click', function() {generateSoundscape();});
-				$('.lastfm-button').on('click', function() {toggleService('lastfm')});
-				$('.freesound-button').on('click', function() {toggleService('freesound')});
-				updateServiceUI();
-				// $(window).on('unload', function(){
-				// 	for(a=0;a<APP.lastfm.aSounds.length;a++) {
-				// 		APP.lastfm.aSounds[a].panner.disconnect();
-				// 	}
-				// });
-		    });
-		})();
-		(function() {
-		    var d = function(s) {
-		            var a = s.match(/[\%][a-fA-F0-9]{2}/g);
-		            for (o = 0; a && o < a.length; o++) {
-		                var hex = /[\%]([a-fA-F0-9]{2})/i.exec(a[o]).pop();
-		                s = s.replace(a[o], String.fromCharCode(parseInt(hex, 16)));
-		            }
-		            return s;
-		        };
-		    if (!window.location['param']) {
-		        window.location.param = {};
-		    }
-		    var qs = window.location.href.match(/([^?=&]+)(=([^&#]*))?/g);
-		    for (i = 0; i < qs.length; i++) {
-		        if (qs[i].indexOf("=") > -1) {
-		            var c = qs[i].split('=');
-		            var v = c.pop();
-		            var n = c.pop();
-		            window.location.param[n] = d(v);
-		        }
-		    }
-		}());
-		</script>
-	</body>
+                L.setOrientation = function (orientation) {
+                    this.pos.orientation = orientation;
+                    this.domObj.style[this.vendorPrefixed("transform")] = "rotate(" + this.pos.orientation + "rad)";
+                    this.updateAudioPosition();
+                };
+
+                L.updateAudioPosition = function () {
+                    Audio.setListenerPosition({
+                        lat: this.pos.lat,
+                        lng: this.pos.lng,
+                        orientation: this.pos.orientation
+                    });
+                }
+
+                L.getPosition = function () {
+                    return this.pos;
+                };
+
+                L.getOrientation = function () {
+                    return this.pos.orientation;
+                };
+
+                L.vendorPrefixed = function (s) {
+                    return eval(0 + "O-Moz-Webkit-Ms-".replace(/.*?-|$/g, "||(s='$&" + s + "')in new Image().style&&s").replace(/-(.)/g, "'+'$1'.toUpperCase()+'"))
+                };
+
+                L.bindKeyboardEvents = function () {
+                    var self = this;
+                    KeyboardController({
+                        37: function () {
+                            self.setOrientation(self.getOrientation() - 0.1);
+                        },
+                        38: function () {
+                            var newX = Math.sin(self.getOrientation()) * 10,
+                                newY = Math.cos(self.getOrientation()) * -10;
+                            APP.map.pan(0, 0, newX, newY, 'default');
+                            self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
+                        },
+                        39: function () {
+                            self.setOrientation(self.getOrientation() + 0.1);
+                        },
+                        40: function () {
+                            var newX = Math.sin(self.getOrientation()) * -10,
+                                newY = Math.cos(self.getOrientation()) * 10;
+                            APP.map.pan(0, 0, newX, newY, 'default');
+                            self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
+                        }
+                    }, 20);
+                    $(document).on('keydown', function (e) {
+                        if (e.which === 32) {
+                            generateSoundscape();
+                        }
+                    });
+                    $(document).on('keyup', function () {
+                        APP.lastfmMarkers.concat(APP.freesoundMarkers).forEach(function (marker, i, a) {
+                            var mpix = APP.map.geoToPixel(marker.coordinate),
+                                mappix = APP.map.geoToPixel(APP.map.center);
+                            if (distance(mpix, mappix) < 70) {
+                                marker.showInfo();
+                            }
+
+                        });
+                    });
+                };
+
+                $(function () {
+                    init();
+                    $('.generate-button').on('click', function () {
+                        generateSoundscape();
+                    });
+                    $('.lastfm-button').on('click', function () {
+                        toggleService('lastfm')
+                    });
+                    $('.freesound-button').on('click', function () {
+                        toggleService('freesound')
+                    });
+                    updateServiceUI();
+                    // $(window).on('unload', function(){
+                    // 	for(a=0;a<APP.lastfm.aSounds.length;a++) {
+                    // 		APP.lastfm.aSounds[a].panner.disconnect();
+                    // 	}
+                    // });
+                });
+            })();
+            (function () {
+                var d = function (s) {
+                        var a = s.match(/[\%][a-fA-F0-9]{2}/g);
+                        for (o = 0; a && o < a.length; o++) {
+                            var hex = /[\%]([a-fA-F0-9]{2})/i.exec(a[o]).pop();
+                            s = s.replace(a[o], String.fromCharCode(parseInt(hex, 16)));
+                        }
+                        return s;
+                    };
+                if (!window.location['param']) {
+                    window.location.param = {};
+                }
+                var qs = window.location.href.match(/([^?=&]+)(=([^&#]*))?/g);
+                for (i = 0; i < qs.length; i++) {
+                    if (qs[i].indexOf("=") > -1) {
+                        var c = qs[i].split('=');
+                        var v = c.pop();
+                        var n = c.pop();
+                        window.location.param[n] = d(v);
+                    }
+                }
+            }());
+        </script>
+    </body>
+
 </html>

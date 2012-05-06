@@ -1,4 +1,4 @@
-var Audio = (function() {
+var Audio = (function () {
     var self = {},
         bufferList, defaults = {
             initialAudioLevel: 1,
@@ -10,13 +10,13 @@ var Audio = (function() {
         };
 
 
-    self.setReverbImpulseResponse = function(url, convolver) {
+    self.setReverbImpulseResponse = function (url, convolver) {
         // Load impulse response asynchronously
         var request = new XMLHttpRequest();
         request.open("GET", url, true);
         request.responseType = "arraybuffer";
 
-        request.onload = function() {
+        request.onload = function () {
             convolver.buffer = self.context.createBuffer(request.response, false);
             APP.LoadingIndicator.resourceLoaded();
         }
@@ -24,7 +24,7 @@ var Audio = (function() {
         request.send();
     };
 
-    self.setAudioSource = function(audio, url) {
+    self.setAudioSource = function (audio, url) {
         var buffer = self.bufferList[url];
 
         // See if we have cached buffer
@@ -36,7 +36,7 @@ var Audio = (function() {
             request.open("GET", url, true);
             request.responseType = "arraybuffer";
 
-            request.onload = function() {
+            request.onload = function () {
                 var buffer = self.context.createBuffer(request.response, true);
 
                 audio.source.buffer = buffer;
@@ -48,7 +48,7 @@ var Audio = (function() {
         }
     };
 
-    self.createSource = function(options) {
+    self.createSource = function (options) {
         var source, dryGainNode, wetGainNode, panner, lowFilter, convolver, options = options || {};
 
         source = options.mediaElement ? self.context.createMediaElementSource(options.mediaElement) : self.context.createBufferSource();
@@ -79,7 +79,6 @@ var Audio = (function() {
         wetGainNode.gain.value = options.initialReverbLevel || defaults.initialReverbLevel;
 
         // self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
-
         if (!options.mediaElement) {
             source.playbackRate.value = 1.0;
         }
@@ -94,7 +93,7 @@ var Audio = (function() {
         };
     };
 
-    self.setListenerPosition = function(listener) {
+    self.setListenerPosition = function (listener) {
         var localOrientation = ((2 * Math.PI - listener.orientation) + Math.PI / 2) % (2 * Math.PI),
             x = Math.cos(localOrientation) * 4,
             y = Math.sin(localOrientation) * 4;
@@ -102,11 +101,11 @@ var Audio = (function() {
         self.context.listener.setPosition(listener.lng * APP.scaleFactor, listener.lat * APP.scaleFactor, 0);
     };
 
-    self.getCurrentTime = function() {
+    self.getCurrentTime = function () {
         return self.context.currentTime;
     };
 
-    var init = function() {
+    var init = function () {
             if (typeof AudioContext == "function") {
                 self.context = new AudioContext();
             } else if (typeof webkitAudioContext == "function") {
