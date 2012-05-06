@@ -33,7 +33,6 @@
 		<script src="API.js"></script>
 		<script src="audio.js"></script>
 		<script src="keyboard.js"></script>
-		<script src="freesound-data.js"></script>
 		<script>
 		(function() {
 			var APP = window.APP || {},
@@ -44,6 +43,7 @@
 		    	APP.freesound.aSounds = [];
 		    	APP.lastfm = new APP.API.LastFM();
 		    	APP.lastfm.aSounds = [];
+				APP.scaleFactor = 500;
 				
 		        // Authentication set-up is the first thing that you must do with the API 
 		        nokia.maps.util.ApplicationContext.set({
@@ -51,7 +51,12 @@
 		            "authenticationToken": "YOUR_AUTHENTICATION_TOKEN"
 		        });
 
-        		navigator.geolocation.getCurrentPosition(createMap, createMap);
+				if(!window.location.param.lat) {
+	        		navigator.geolocation.getCurrentPosition(createMap, createMap);
+				} else {
+					createMap({coords:{latitude:window.location.param.lat*1,longitude:window.location.param.lng*1}})
+				}
+
 
 		    },
 
@@ -79,10 +84,12 @@
 			    APP.infoBubbles = infoBubbles;
 			    Audio.setListenerPosition(APP.ListenerObj.getPosition());
 			    var vp = APP.map.getViewBounds();
-			    APP.freesound.retrieveSoundsFor({minLat: vp.bottomRight.latitude,
-			    	                             minLng: vp.topLeft.longitude,
-			    	                             maxLat: vp.topLeft.latitude,
-			    	                             maxLng: vp.bottomRight.longitude},
+				var bbheight = vp.topLeft.latitude-vp.bottomRight.latitude;
+				var bbwidth = vp.bottomRight.longitude - vp.topLeft.longitude;
+			    APP.freesound.retrieveSoundsFor({minLat: vp.bottomRight.latitude - bbheight,
+			    	                             minLng: vp.topLeft.longitude - bbwidth,
+			    	                             maxLat: vp.topLeft.latitude + bbheight,
+			    	                             maxLng: vp.bottomRight.longitude + bbwidth},
 			    	                             addFreesoundSound);
 			    APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
 		    },
@@ -91,7 +98,7 @@
 				if(sound.duration>=10) {
 			    	var soundObj = Audio.createSource();
 			    	Audio.setAudioSource(soundObj, sound['preview-hq-mp3']);
-			    	soundObj.panner.setPosition(sound.geotag.lon*100, sound.geotag.lat*100, 0);
+			    	soundObj.panner.setPosition(sound.geotag.lon*APP.scaleFactor, sound.geotag.lat*APP.scaleFactor, 0);
 			    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
 			        marker.text = sound.tags.join(', ');
 			        marker.coord = {latitude: sound.geotag.lat, longitude: sound.geotag.lon};
@@ -113,8 +120,8 @@
 				mediaElement.autoplay = true;
 				mediaElement.loop = true;
 				$(mediaElement).on('canplay',function() {
-			    	var soundObj = Audio.createSource({"mediaElement":mediaElement, "initialAudioLevel": 0.01, "initialReverbLevel": 0.01});
-			    	soundObj.panner.setPosition(event.meta.venue.location.lng*100, event.meta.venue.location.lat*100, 0);
+			    	var soundObj = Audio.createSource({"mediaElement":mediaElement, "initialAudioLevel": 0.5, "initialReverbLevel": 0.5});
+			    	soundObj.panner.setPosition(event.meta.venue.location.lng*APP.scaleFactor, event.meta.venue.location.lat*APP.scaleFactor, 0);
 					
 			    	var marker = new nokia.maps.map.StandardMarker({latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)}, {brush: {color: '#cc0000'}});
 			        marker.text = event.artist;
@@ -128,7 +135,7 @@
 			        APP.map.objects.add(marker);
 
 				    APP.lastfm.aSounds.push(soundObj);
-				})
+				});
 		    };
 
 		    var L;
@@ -197,7 +204,7 @@
 	    		for (var i = 0; i < Math.min(5, fs.sounds.length); i++) {
 			        fsAudio[i] = Audio.createSource();
 			        Audio.setAudioSource(fsAudio[i], fs.sounds[i]['preview-hq-mp3']);
-			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lon*100, fs.sounds[i]['geotag'].lat*100,0);
+			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lon*APP.scaleFactor, fs.sounds[i]['geotag'].lat*APP.scaleFactor,0);
 			        var marker = new nokia.maps.map.StandardMarker({latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon});
 			        marker.text = fs.sounds[i]['tags'].join(', ');
 			        marker.coord = {latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon};
@@ -218,6 +225,28 @@
 		        init();
 		    });
 		})();
+		(function() {
+		    var d = function(s) {
+		            var a = s.match(/[\%][a-fA-F0-9]{2}/g);
+		            for (o = 0; a && o < a.length; o++) {
+		                var hex = /[\%]([a-fA-F0-9]{2})/i.exec(a[o]).pop();
+		                s = s.replace(a[o], String.fromCharCode(parseInt(hex, 16)));
+		            }
+		            return s;
+		        };
+		    if (!window.location['param']) {
+		        window.location.param = {};
+		    }
+		    var qs = window.location.href.match(/([^?=&]+)(=([^&#]*))?/g);
+		    for (i = 0; i < qs.length; i++) {
+		        if (qs[i].indexOf("=") > -1) {
+		            var c = qs[i].split('=');
+		            var v = c.pop();
+		            var n = c.pop();
+		            window.location.param[n] = d(v);
+		        }
+		    }
+		}());
 		</script>
 	</body>
 </html>

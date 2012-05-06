@@ -96,7 +96,7 @@ var Audio = (function() {
             x = Math.cos(localOrientation) * 4,
             y = Math.sin(localOrientation) * 4;
         self.context.listener.setOrientation(x, y, 0, 0, 0, 1);
-        self.context.listener.setPosition(listener.lng * 100, listener.lat * 100, 0);
+        self.context.listener.setPosition(listener.lng * APP.scaleFactor, listener.lat * APP.scaleFactor, 0);
     };
 
     self.getCurrentTime = function() {
