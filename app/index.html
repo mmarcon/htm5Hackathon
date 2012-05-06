@@ -53,12 +53,6 @@
 
         		navigator.geolocation.getCurrentPosition(createMap, createMap);
 
-
-		        // createMap();
-		        // ensureSize();
-
-				// This makes sure the map is always the right size
-		        // $(window).resize(ensureSize);
 		    },
 
 		    createMap = function(position) {
@@ -93,45 +87,48 @@
 			    APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
 		    },
 
-		    ensureSize = function() {
-		        // $('#mapContainer').height($('body').height() - $('#header').height());
-		    },
-
 		    addFreesoundSound = function(sound) {
-		    	var soundObj = Audio.createSource();
-		    	Audio.setAudioSource(soundObj, sound['preview-hq-mp3']);
-		    	soundObj.panner.setPosition(sound.geotag.lon*100, sound.geotag.lat*100, 0);
-		    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
-		        marker.text = sound.tags.join(', ');
-		        marker.coord = {latitude: sound.geotag.lat, longitude: sound.geotag.lon};
+				if(sound.duration>=10) {
+			    	var soundObj = Audio.createSource();
+			    	Audio.setAudioSource(soundObj, sound['preview-hq-mp3']);
+			    	soundObj.panner.setPosition(sound.geotag.lon*100, sound.geotag.lat*100, 0);
+			    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
+			        marker.text = sound.tags.join(', ');
+			        marker.coord = {latitude: sound.geotag.lat, longitude: sound.geotag.lon};
 
-		        marker.addListener("click", function (evt) {
-				    APP.infoBubbles.addBubble(this.text, this.coord);
-				    evt.preventDefault();
-				    evt.stopPropagation();
-				});
-		        APP.map.objects.add(marker);
-		        soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
-				APP.freesound.aSounds.push(soundObj);
+			        marker.addListener("click", function (evt) {
+						APP.infoBubbles.addBubble(this.text, this.coord);
+						evt.preventDefault();
+						evt.stopPropagation();
+					});
+			        APP.map.objects.add(marker);
+			        soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
+					APP.freesound.aSounds.push(soundObj);
+				}
 		    },
 
 		    addLastFMEvent = function(event) {
-		    	var soundObj = Audio.createSource();
-		    	Audio.setAudioSource(soundObj, event.preview);
-		    	soundObj.panner.setPosition(event.meta.venue.location.lng, event.meta.venue.location.lat, 0);
-		    	var marker = new nokia.maps.map.StandardMarker({latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)}, {brush: {color: '#cc0000'}});
-		        marker.text = event.artist;
-		        marker.coord = {latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)};
+				var mediaElement = document.createElement('audio');
+				mediaElement.src = event.preview;
+				mediaElement.autoplay = true;
+				mediaElement.loop = true;
+				$(mediaElement).on('canplay',function() {
+			    	var soundObj = Audio.createSource({"mediaElement":mediaElement, "initialAudioLevel": 0.01, "initialReverbLevel": 0.01});
+			    	soundObj.panner.setPosition(event.meta.venue.location.lng*100, event.meta.venue.location.lat*100, 0);
+					
+			    	var marker = new nokia.maps.map.StandardMarker({latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)}, {brush: {color: '#cc0000'}});
+			        marker.text = event.artist;
+			        marker.coord = {latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)};
 
-		        marker.addListener("click", function (evt) {
-				    APP.infoBubbles.addBubble(this.text, this.coord);
-				    evt.preventDefault();
-				    evt.stopPropagation();
-				});
-		        APP.map.objects.add(marker);
-		        soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
-				APP.lastfm.aSounds.push(soundObj);
+			        marker.addListener("click", function (evt) {
+					 	APP.infoBubbles.addBubble(this.text, this.coord);
+					 	evt.preventDefault();
+					 	evt.stopPropagation();
+					});
+			        APP.map.objects.add(marker);
 
+				    APP.lastfm.aSounds.push(soundObj);
+				})
 		    };
 
 		    var L;

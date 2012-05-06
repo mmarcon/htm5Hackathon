@@ -1,14 +1,14 @@
 var Audio = (function() {
     var self = {},
-		bufferList,
-		defaults = {
-			kInitialReverbLevel: 0.6,
-			lowFilterFrequencyValue: 22050.0,
-			lowFilterQValue: 5.0,
-			sourcePlaybackRateValue: 1.0,
-			looping: true
-		};
-	
+        bufferList, defaults = {
+            initialAudioLevel: 1,
+            initialReverbLevel: 0.6,
+            lowFilterFrequencyValue: 22050.0,
+            lowFilterQValue: 5.0,
+            sourcePlaybackRateValue: 1.0,
+            loop: true
+        };
+
 
     self.setReverbImpulseResponse = function(url, convolver) {
         // Load impulse response asynchronously
@@ -24,7 +24,7 @@ var Audio = (function() {
 
     self.setAudioSource = function(audio, url) {
         var buffer = self.bufferList[url];
-		
+
         // See if we have cached buffer
         if (buffer) {
             audio.source.buffer = buffer;
@@ -44,82 +44,86 @@ var Audio = (function() {
             request.send();
         }
     };
-	
-	self.createSource = function(options){
-	    var source, dryGainNode, wetGainNode, panner, lowFilter, convolver, options = options || {};
 
-	    source = self.context.createBufferSource();
-	    dryGainNode = self.context.createGainNode();
-	    wetGainNode = self.context.createGainNode();
-	    panner = self.context.createPanner();
+    self.createSource = function(options) {
+        var source, dryGainNode, wetGainNode, panner, lowFilter, convolver, options = options || {};
 
-	    lowFilter = self.context.createBiquadFilter();
-	    lowFilter.frequency.value = options.lowFilterFrequencyValue || defaults.lowFilterFrequencyValue;
-	    lowFilter.Q.value = options.lowFilterQValue || defaults.lowFilterQValue;
+        source = options.mediaElement ? self.context.createMediaElementSource(options.mediaElement) : self.context.createBufferSource();
+        dryGainNode = self.context.createGainNode();
+        wetGainNode = self.context.createGainNode();
 
-	    convolver = self.context.createConvolver();
+        panner = self.context.createPanner();
 
-	    // Connect audio processing graph
-	    source.connect(lowFilter);
-	    lowFilter.connect(panner);
+        lowFilter = self.context.createBiquadFilter();
+        lowFilter.frequency.value = options.lowFilterFrequencyValue || defaults.lowFilterFrequencyValue;
+        lowFilter.Q.value = options.lowFilterQValue || defaults.lowFilterQValue;
 
-	    // Connect dry mix
-	    panner.connect(dryGainNode);
-	    dryGainNode.connect(self.context.destination);
+        convolver = self.context.createConvolver();
 
-	    // Connect wet mix
-	    panner.connect(convolver);
-	    convolver.connect(wetGainNode);
-	    wetGainNode.connect(self.context.destination);
-	    wetGainNode.gain.value = options.kInitialReverbLevel || defaults.kInitialReverbLevel;
+        // Connect audio processing graph
+        source.connect(lowFilter);
+        lowFilter.connect(panner);
 
-	    self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
+        // Connect dry mix
+        panner.connect(dryGainNode);
+        dryGainNode.connect(self.context.destination);
+        dryGainNode.gain.value = options.initialAudioLevel || defaults.initialAudioLevel;
 
-	    source.playbackRate.value = 1.0;
+        // Connect wet mix
+        panner.connect(convolver);
+        convolver.connect(wetGainNode);
+        wetGainNode.connect(self.context.destination);
+        wetGainNode.gain.value = options.initialReverbLevel || defaults.initialReverbLevel;
 
-	    panner.setPosition(0, 0, 0);
+        self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
 
-	    source.looping = true;
+        if (!options.mediaElement) {
+            source.playbackRate.value = 1.0;
+        }
 
-	    return {
-	        panner: panner,
-	        source: source
-	    };
-	};
-	
-	self.setListenerPosition = function(listener) {
-	    var localOrientation = ((2*Math.PI - listener.orientation) + Math.PI/2)%(2*Math.PI),
-	    	x = Math.cos(localOrientation) * 4,
-	        y = Math.sin(localOrientation) * 4;
-		self.context.listener.setOrientation(x, y, 0, 0, 0, 1);
-		self.context.listener.setPosition(listener.lng*100, listener.lat*100, 0);
-	};
+        panner.setPosition(0, 0, 0);
 
-	self.getCurrentTime = function() {
-		return self.context.currentTime;
-	};
+        source.loop = options.loop || defaults.loop;
 
-	var init = function(){
-	    if (typeof AudioContext == "function") {
-	        self.context = new AudioContext();
-	    } else if (typeof webkitAudioContext == "function") {
-	        self.context = new webkitAudioContext();
-	    } else {
-	        throw new Error('AudioContext not supported. :(');
-	    }
+        return {
+            panner: panner,
+            source: source
+        };
+    };
 
-	    self.bufferList = {};
-	};
-	
-	init();
-	
-	return {
-		setReverbImpulseResponse: self.setReverbImpulseResponse,
-		setAudioSource: self.setAudioSource,
-		createSource: self.createSource,
-		getCurrentTime: self.getCurrentTime,
-		setListenerPosition: self.setListenerPosition
-	}
+    self.setListenerPosition = function(listener) {
+        var localOrientation = ((2 * Math.PI - listener.orientation) + Math.PI / 2) % (2 * Math.PI),
+            x = Math.cos(localOrientation) * 4,
+            y = Math.sin(localOrientation) * 4;
+        self.context.listener.setOrientation(x, y, 0, 0, 0, 1);
+        self.context.listener.setPosition(listener.lng * 100, listener.lat * 100, 0);
+    };
+
+    self.getCurrentTime = function() {
+        return self.context.currentTime;
+    };
+
+    var init = function() {
+            if (typeof AudioContext == "function") {
+                self.context = new AudioContext();
+            } else if (typeof webkitAudioContext == "function") {
+                self.context = new webkitAudioContext();
+            } else {
+                throw new Error('AudioContext not supported. :(');
+            }
+
+            self.bufferList = {};
+        };
+
+    init();
+
+    return {
+        setReverbImpulseResponse: self.setReverbImpulseResponse,
+        setAudioSource: self.setAudioSource,
+        createSource: self.createSource,
+        createMediaLinkedSource: self.createMediaLinkedSource,
+        getCurrentTime: self.getCurrentTime,
+        setListenerPosition: self.setListenerPosition
+    }
 
 })();
-
