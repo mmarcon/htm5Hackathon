@@ -213,7 +213,7 @@
 		    addFreesoundSound = function(sound) {
 				if(sound.duration>=10) {
 			    	var soundObj = Audio.createSource();
-			    	Audio.setAudioSource(soundObj, sound['preview-hq-mp3']);
+			    	Audio.setAudioSource(soundObj, sound['preview-lq-mp3']);
 			    	soundObj.panner.setPosition(sound.geotag.lon*APP.scaleFactor, sound.geotag.lat*APP.scaleFactor, 0);
 			    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
 			        marker.text = sound.tags.join(', ');
