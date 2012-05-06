@@ -94,6 +94,9 @@
 			    APP.map = map;
 			    APP.infoBubbles = infoBubbles;
 			    Audio.setListenerPosition(APP.ListenerObj.getPosition());
+			},
+			
+			generateSoundscape = function() {
 			    var vp = APP.map.getViewBounds();
 				var bbheight = vp.topLeft.latitude-vp.bottomRight.latitude;
 				var bbwidth = vp.bottomRight.longitude - vp.topLeft.longitude;
@@ -103,7 +106,7 @@
 			    	                             maxLng: vp.bottomRight.longitude + bbwidth},
 			    	                             addFreesoundSound);
 			    APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
-		    },
+			},
 
 		    addFreesoundSound = function(sound) {
 				if(sound.duration>=10) {
@@ -208,10 +211,16 @@
 	    				self.setLatLng(APP.map.center.latitude, APP.map.center.longitude);
 					}
 				}, 20);
+				$(document).on('keydown', function(e) {if(e.which===32) {generateSoundscape();}});
 		    };
 
 		    $(function() {
 		        init();
+				// $(window).on('unload', function(){
+				// 	for(a=0;a<APP.lastfm.aSounds.length;a++) {
+				// 		APP.lastfm.aSounds[a].panner.disconnect();
+				// 	}
+				// });
 		    });
 		})();
 		(function() {

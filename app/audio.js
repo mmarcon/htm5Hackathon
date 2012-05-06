@@ -78,7 +78,7 @@ var Audio = (function() {
         wetGainNode.connect(self.context.destination);
         wetGainNode.gain.value = options.initialReverbLevel || defaults.initialReverbLevel;
 
-        self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
+        // self.setReverbImpulseResponse('impulseResponses/s3_r4_bd.wav', convolver);
 
         if (!options.mediaElement) {
             source.playbackRate.value = 1.0;
