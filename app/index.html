@@ -129,6 +129,18 @@
 			    APP.lastfm.retrieveEventsFor({lat: APP.map.center.latitude, lng: APP.map.center.longitude}, addLastFMEvent);
 			},
 
+			showMarkerInfo = function(){
+				if (this.img) {
+	        		var dom = '<div class="lastfm-bubble">';
+	        		dom += '<img src="'+this.img+'"/>';
+	        		dom += '<p>' + this.text + '</p></div>';
+	        		APP.infoBubbles.addBubble(dom, this.coord);
+	        	}
+	        	else {
+	        		APP.infoBubbles.addBubble(this.text, this.coord);
+	        	}
+			},
+
 		    addFreesoundSound = function(sound) {
 				if(sound.duration>=10) {
 			    	var soundObj = Audio.createSource();
@@ -141,17 +153,7 @@
 			        //Preload
 			        new Image().src = marker.img;
 
-			        marker.showInfo = function(){
-			        	if (this.img) {
-			        		var dom = '<div class="lastfm-bubble">';
-			        		dom += '<img src="'+this.img+'" width="60px"/>';
-			        		dom += '<p>' + this.text + '</p></div>';
-			        		APP.infoBubbles.addBubble(dom, this.coord);
-			        	}
-			        	else {
-			        		APP.infoBubbles.addBubble(this.text, this.coord);
-			        	}
-			        };
+			        marker.showInfo = showMarkerInfo;
 
 			        marker.addListener("click", function (evt) {
 						this.showInfo();
@@ -182,17 +184,7 @@
 			        marker.img = event.album.cover || null;
 			        //Preload
 			        new Image().src = marker.img;
-			        marker.showInfo = function(){
-			        	if (this.img) {
-			        		var dom = '<div class="lastfm-bubble">';
-			        		dom += '<img src="'+this.img+'" width="60px"/>';
-			        		dom += '<p>' + this.text + '</p></div>';
-			        		APP.infoBubbles.addBubble(dom, this.coord);
-			        	}
-			        	else {
-			        		APP.infoBubbles.addBubble(this.text, this.coord);
-			        	}
-			        };
+			        marker.showInfo = showMarkerInfo;
 
 			        marker.addListener("click", function (evt) {
 			        	this.showInfo();
