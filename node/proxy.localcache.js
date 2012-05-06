@@ -19,6 +19,7 @@ app.get('/proxy', function (request, response) {
         fStream.on('close', function () {
             console.log(fileName + ' written.');
             response.writeHead(302, {
+                //Make sure media exists if you attempt to use this proxying strategy
                 'Location': '/media/' + fileName
             });
             response.end();
@@ -27,6 +28,7 @@ app.get('/proxy', function (request, response) {
     request.pipe(proxy_request);
 });
 
-app.use(express.static(path.normalize(__dirname + '/..')));
+console.log(path.normalize(__dirname + '../app'));
+app.use(express.static(path.normalize(__dirname + '/../app')));
 
 app.listen(8000);

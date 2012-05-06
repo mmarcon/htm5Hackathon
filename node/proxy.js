@@ -19,6 +19,7 @@ app.get('/proxy', function (request, response) {
     request.pipe(proxy_request);
 });
 
-app.use(express.static(path.normalize(__dirname + '/..')));
+console.log(path.normalize(__dirname + '../app'));
+app.use(express.static(path.normalize(__dirname + '/../app/')));
 
 app.listen(8000);
