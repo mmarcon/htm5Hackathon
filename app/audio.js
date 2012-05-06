@@ -18,7 +18,9 @@ var Audio = (function() {
 
         request.onload = function() {
             convolver.buffer = self.context.createBuffer(request.response, false);
+            APP.LoadingIndicator.resourceLoaded();
         }
+        APP.LoadingIndicator.resourceIsLoading();
         request.send();
     };
 
@@ -39,8 +41,9 @@ var Audio = (function() {
 
                 audio.source.buffer = buffer;
                 self.bufferList[url] = buffer; // cache it
+                APP.LoadingIndicator.resourceLoaded();
             }
-
+            APP.LoadingIndicator.resourceIsLoading();
             request.send();
         }
     };

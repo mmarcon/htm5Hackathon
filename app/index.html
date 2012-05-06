@@ -22,6 +22,16 @@
 			margin: -25px 0 0 -25px;
 		}
 
+		.loading-indicator {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 50px;
+			height: 50px;
+			margin: -10px 0 0 -25px;
+			background: transparent url(loader.gif) center bottom no-repeat;
+		}
+
 		</style>
 		<script src="http://api.maps.nokia.com/2.2.0/jsl.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
@@ -30,6 +40,7 @@
 	<body>
 		<div id="mapContainer"></div>
 		<img class="listener" src="arrow.png"></img>
+		<script src="loader-manager.js"></script>
 		<script src="API.js"></script>
 		<script src="audio.js"></script>
 		<script src="keyboard.js"></script>
@@ -108,6 +119,7 @@
 		    },
 
 		    addLastFMEvent = function(event) {
+		    	APP.LoadingIndicator.resourceIsLoading();
 				var mediaElement = document.createElement('audio');
 				mediaElement.src = event.preview;
 				mediaElement.autoplay = true;
@@ -128,6 +140,7 @@
 			        APP.map.objects.add(marker);
 
 				    APP.lastfm.aSounds.push(soundObj);
+				    APP.LoadingIndicator.resourceLoaded();
 				})
 		    };
 
@@ -190,29 +203,7 @@
 				}, 20);
 		    };
 
-		    var setUpTestData = function() {
-		        Audio.setListenerPosition({lat:52.5233,lng:13.4127,orientation:0});
-		    	fsAudio = [];
 
-	    		for (var i = 0; i < Math.min(5, fs.sounds.length); i++) {
-			        fsAudio[i] = Audio.createSource();
-			        Audio.setAudioSource(fsAudio[i], fs.sounds[i]['preview-hq-mp3']);
-			        fsAudio[i].panner.setPosition(fs.sounds[i]['geotag'].lon*100, fs.sounds[i]['geotag'].lat*100,0);
-			        var marker = new nokia.maps.map.StandardMarker({latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon});
-			        marker.text = fs.sounds[i]['tags'].join(', ');
-			        marker.coord = {latitude: fs.sounds[i]['geotag'].lat, longitude: fs.sounds[i]['geotag'].lon};
-
-			        marker.addListener("click", function (evt) {
-					    APP.infoBubbles.addBubble(this.text, this.coord);
-					    evt.preventDefault();
-					    evt.stopPropagation();
-					});
-			        APP.map.objects.add(marker);
-
-
-			        fsAudio[i].source.noteOn(Audio.getCurrentTime() + 0.020);
-			    }
-		    };
 
 		    $(function() {
 		        init();

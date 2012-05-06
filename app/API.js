@@ -28,6 +28,7 @@
 			if (typeof error === 'function') {
 				error.apply(null, arguments);
 			}
+			APP.LoadingIndicator.resourceLoaded();
 		};
 
 		successFn = function(response){
@@ -38,11 +39,14 @@
 			var sounds = response.sounds;
 			sounds.forEach(function(val, index, array){
 				if (typeof success === 'function') {
+					val.proxied = APP.API.Config.proxyURL + '?url=' + val['preview-hq-mp3']
 					success(val);
 				}
 			});
+			APP.LoadingIndicator.resourceLoaded();
 		};
 
+		APP.LoadingIndicator.resourceIsLoading();
 		$.ajax({
 			url: url,
 			success: successFn,
@@ -66,6 +70,7 @@
 			if (typeof error === 'function') {
 				error.apply(null, arguments);
 			}
+			APP.LoadingIndicator.resourceLoaded();
 		};
 
 		successFn = function(response){
@@ -99,10 +104,10 @@
 					deezer.retrieveSoundsFor(meta, success)
 				}
 			});
-
+			APP.LoadingIndicator.resourceLoaded();
 		};
 
-
+		APP.LoadingIndicator.resourceIsLoading();
 		$.ajax({
 			url: url,
 			success: successFn,
@@ -125,6 +130,7 @@
 			if (typeof error === 'function') {
 				error.apply(null, arguments);
 			}
+			APP.LoadingIndicator.resourceLoaded();
 		};
 
 		successFn = function(response) {
@@ -145,8 +151,10 @@
 			if (typeof success === 'function') {
 				success(data);
 			}
+			APP.LoadingIndicator.resourceLoaded();
 		};
 
+		APP.LoadingIndicator.resourceIsLoading();
 		$.ajax({
 			url: url,
 			dataType: 'jsonp',

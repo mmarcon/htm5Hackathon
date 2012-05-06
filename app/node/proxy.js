@@ -13,7 +13,8 @@ app.get('/proxy', function(request, response){
   var proxy_request = proxy.request(request.method, requestURL.href, request.headers);
   proxy_request.on('response', function (proxy_response) {
         proxy_response.pipe(response);
-        response.writeHead(proxy_response.statusCode, proxy_response.headers);
+        var h = proxy_response.headers;
+        response.writeHead(proxy_response.statusCode, h);
   });
   request.pipe(proxy_request);
 });
