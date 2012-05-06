@@ -6,7 +6,8 @@
 		freeSoundBaseURL: 'http://www.freesound.org/api/sounds/geotag/?min_lat={BB_MIN_LAT}&min_lon={BB_MIN_LNG}&max_lat={BB_MAX_LAT}&max_lon={BB_MAX_LNG}&sounds_per_page=10&api_key=1142723002b040a0b1f378dc8787bb70',
 		lastFMBaseURL: 'http://ws.audioscrobbler.com/2.0/?method=geo.getevents&lat={LATITUDE}&long={LONGITUDE}&api_key=6c9b80ce8e73b74ac58e22c0657d942c&format=json',
 		deezerBaseURL: 'http://api.deezer.com/2.0/search?q={ARTIST_NAME}&output=jsonp',
-		proxyURL: 'http://localhost:8000/proxy'
+		proxyURL: 'http://localhost:8000/proxy',
+		flickHoldrBaseUrl: 'http://flickholdr.com/100/100/'
 	};
 
 	var F, L, D;
@@ -39,7 +40,12 @@
 			var sounds = response.sounds;
 			sounds.forEach(function(val, index, array){
 				if (typeof success === 'function') {
-					val.proxied = APP.API.Config.proxyURL + '?url=' + val['preview-hq-mp3']
+					val.proxied = APP.API.Config.proxyURL + '?url=' + val['preview-hq-mp3'];
+					if (val.tags.length > 4) {
+						val.tags.length = 4;
+					}
+					val.flickholdr = APP.API.Config.flickHoldrBaseUrl + val.tags.join(', ');
+
 					success(val);
 				}
 			});

@@ -4,6 +4,7 @@
 		<meta charset="utf-8">
 		<title>Nokia Maps Mashup</title>
 		<style>
+		@import url(http://fonts.googleapis.com/css?family=Share);
 		html,body, #mapContainer {
 			font-family: sans-serif;
 			background: #fff;
@@ -32,14 +33,22 @@
 			background: transparent url(loader.gif) center bottom no-repeat;
 		}
 
+		.lastfm-bubble {
+			width: 160px;
+		}
+
 		.lastfm-bubble img {
 			display: block;
 			margin: 5px auto;
 			border-radius: 3px;
 		}
 
-		.lastfm-bubble p {
+		.lastfm-bubble>p {
 			color: #fff;
+			text-align: center;
+			font-size: 16px;
+			white-space: normal;
+			font-family: 'Share';
 		}
 
 		</style>
@@ -62,6 +71,7 @@
 		    	APP.ListenerObj.bindKeyboardEvents();
 		    	APP.freesound = new APP.API.Freesound();
 		    	APP.freesound.aSounds = [];
+		    	APP.freesoundMarkers = [];
 		    	APP.lastfm = new APP.API.LastFM();
 		    	APP.lastfm.aSounds = [];
 		    	APP.lastfmMarkers = [];
@@ -127,13 +137,30 @@
 			    	var marker = new nokia.maps.map.StandardMarker({latitude: sound.geotag.lat, longitude: sound.geotag.lon});
 			        marker.text = sound.tags.join(', ');
 			        marker.coord = {latitude: sound.geotag.lat, longitude: sound.geotag.lon};
+			        marker.img = sound.flickholdr;
+			        //Preload
+			        new Image().src = marker.img;
+
+			        marker.showInfo = function(){
+			        	if (this.img) {
+			        		var dom = '<div class="lastfm-bubble">';
+			        		dom += '<img src="'+this.img+'" width="60px"/>';
+			        		dom += '<p>' + this.text + '</p></div>';
+			        		APP.infoBubbles.addBubble(dom, this.coord);
+			        	}
+			        	else {
+			        		APP.infoBubbles.addBubble(this.text, this.coord);
+			        	}
+			        };
 
 			        marker.addListener("click", function (evt) {
-						APP.infoBubbles.addBubble(this.text, this.coord);
+						this.showInfo();
 						evt.preventDefault();
 						evt.stopPropagation();
 					});
 			        APP.map.objects.add(marker);
+			        APP.freesoundMarkers.push(marker);
+
 			        soundObj.source.noteOn(Audio.getCurrentTime() + 0.020);
 					APP.freesound.aSounds.push(soundObj);
 				}
@@ -153,6 +180,8 @@
 			        marker.text = event.artist;
 			        marker.coord = {latitude: parseFloat(event.meta.venue.location.lat), longitude: parseFloat(event.meta.venue.location.lng)};
 			        marker.img = event.album.cover || null;
+			        //Preload
+			        new Image().src = marker.img;
 			        marker.showInfo = function(){
 			        	if (this.img) {
 			        		var dom = '<div class="lastfm-bubble">';
@@ -242,7 +271,7 @@
 				}, 20);
 				$(document).on('keydown', function(e) {if(e.which===32) {generateSoundscape();}});
 				$(document).on('keyup', function(){
-					APP.lastfmMarkers.forEach(function(marker, i, a){
+					APP.lastfmMarkers.concat(APP.freesoundMarkers).forEach(function(marker, i, a){
 						var mpix = APP.map.geoToPixel(marker.coordinate),
 							mappix = APP.map.geoToPixel(APP.map.center);
 						if (distance(mpix, mappix) < 70) {
