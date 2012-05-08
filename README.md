@@ -41,3 +41,6 @@ Web Audio API. Detailed information can be found at: [https://dvcs.w3.org/hg/aud
  - LastFM API	   - http://www.last.fm/api
  - Deezer API     - http://developers.deezer.com/api
  - FlickHoldr     - http://flickholdr.com
+
+##Other Resources
+ - Slide deck about Soundscape: http://mmarcon.github.com/slides/soundscape
